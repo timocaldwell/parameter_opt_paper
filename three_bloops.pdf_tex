@@ -74,5 +74,6 @@
     \put(0.34593934,0.38360097){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{b)}}}}%
     \put(0.68634011,0.38360097){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{c)}}}}%
     \put(0.08244173,0.12718453){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{clamp}}}%
+    \put(0.23385696,0.12088323){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{$W$}}}%
   \end{picture}%
 \endgroup%

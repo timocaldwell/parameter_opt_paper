@@ -51,7 +51,7 @@
   \begin{picture}(1,0.28393562)%
     \put(0,0){\includegraphics[width=\unitlength]{loop_link.pdf}}%
     \put(0.1175204,0.09878837){\color[rgb]{0,0,0}\makebox(0,0)[rb]{\smash{$mass_{i+1}$}}}%
-    \put(0.5150756,0.17205359){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\theta_i$}}}%
+    \put(0.53146776,0.17205359){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\theta_i$}}}%
     \put(0.79465282,0.02270294){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{$\psi_i$}}}%
     \put(0.25213452,0.26310993){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{Rotation by $\theta_i$}}}%
     \put(0.57375893,0.26310993){\color[rgb]{0,0,0}\makebox(0,0)[b]{\smash{Rotation by $\psi_i$}}}%
