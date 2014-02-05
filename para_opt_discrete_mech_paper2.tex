@@ -12,6 +12,7 @@
 
 \usepackage{framed}
 \usepackage{url}
+%\usepackage{hyperref}
 
 \newtheorem{thm}{Theorem}
 \newtheorem{example}{Example}
@@ -166,14 +167,12 @@ This paper is organized as follows: ..........
 
 %Variational integrators give reason to expect the mechanical system simulation does not violate physical properties while the scalable formulation give reason to expect the necessary calculations like linearization evaluations can be done in a reasonable time. It is worth noting that variational integrators are not limited to just conservative systems.  They can handle forcing and dissipation.  They also handle holonomic constraints directly which avoids numerical error in the simulation violating the constraint \textbf{cite}. Ideally, simulation is sufficiently accurate as to not be the cause for error in the parameter estimation and it is sufficiently fast as to not be a reason for not doing the estimation in the first place.
 
-\section{Experimental Setup}
-The experiment is set up as follows.  Baxter's arm is positioned similarly to that in Figure~\ref{fig-baxter_image_1}.  The top of a rubber loop is placed in Baxter's gripper and the bottom is clamped to the table.  The tube has a radius of $0.355$ meters and a mass of $0.132$ kilograms.  The arm is run through a recorded motion that is designed to stretch, bend, and twist the tube. The joint angles and torques are captured every 100Hz.  \textbf{What else goes here? Or should we just throw this intro the Intro where I mention Baxter?}
 
-%https://github.com/RethinkRobotics
 
 
 
 \section{Mechanical Systems}
+\label{sec-sim}
 A comparison of continuous time and discrete time mechanical systems is presented.  The mechanical system depends on $n_a$ system parameters from the parameter space $\mathcal{A}\in\setR^m$. The mechanical system has $n_q$ generalized coordinates $q\in\setR^{n_q}$.  For continuous time, $q$ varies the continuous variable $t$\textemdash e.g. $q(t)$\textemdash for $t$ in the interval $[0,t_f]$, $t_f>0$.  Likewise, for the discrete representation, $q$ varies with the discrete variable $k$\textemdash e.g. $q_k$\textemdash for $k$ in the set $\mathcal{K}:=\{0,1,\ldots,k_f\}$, $k_f>0$.  Each discrete time $k$ pairs with a continuous time, labeled $t_k$, where $t_0 = 0$, $t_{k_f} = t_f$ and $t_k<t_{k+1}$. This section presents the continuous and discrete dynamics dependent on the parameters $a\in\mathcal{A}$.  The continuous dynamics are provided for comparison with the discrete system, in which the paper results are given.
 
 \subsection{Continuous Mechanical System}
@@ -317,6 +316,7 @@ The term $B_k$ depends on $A_k$ and the previous term $B_{k-1}$. The linearizati
 %\]
 
 \section{Parameter Optimization}
+\label{sec-opt}
 The goal of parameter optimization is to calculate the system parameters $a\in\mathcal{A}$ that minimize a cost functional.  For the continuous problem, the cost functional is the integral of a running cost $\ell(x(t),t,a)$ plus a terminal cost $m(x(t_f),a)$:
 \begin{problem}[Continuous System Parameter Optimization]
 Calculate the parameters $a\in\mathcal{A}$ which solves:
@@ -406,14 +406,77 @@ DJ(a)\theta = \Big[\sum_{k = 1}^{k_f}\lambda_kB_{k-1} +D_2\ell_d(x_k,a) + D_2m_d
 and the proof is finished.
 \end{proof}
 
-\section{Example}
+\section{Experiment}
+The goal is to identify the model parameters of a flexible loop that best match its physical behavior.  We use Rethink Robotics' Baxter robot to both manipulate and measure the loop.  Furthermore, we simulate this interaction using a discrete model of the loop.  The simulated arm joint angles and torques depend on the parameters set for a simulation.  As such, we can find the parameters which correspond to simulated joint angles that best match the measured joint angles.  For this experiment, the unknown parameters describe the stiffness of the loop.
+
+The tools for simulating Baxter manipulating a loop are given in Section \ref{sec-sim} while the optimization technique for best matching the simulation to the measured is in Section \ref{sec-opt}.  The following provides the experimental setup, the model and simulation of Baxter manipulating the loop, and the results of optimally identifying loop parameters.
+
+\subsection{Experimental Setup}
+The experiment is set up as follows.  Baxter's arm is positioned similarly to that in Figure~\ref{fig-baxter_image_1}.  The top of a rubber loop is placed in Baxter's gripper and the bottom is clamped to the table.   The loop is initially positioned vertically. The loop has a radius of $0.355$ meters and a mass of $0.132$ kilograms.  The arm is run through a recorded motion that is designed to stretch, bend, and twist the tube. The joint angles and torques are captured every 100Hz.  
+
+\subsection{Model}
+We model Baxter and the loop with the same mechanics.  We model both as a series of rigid links connected by rotational joints.  For Baxter, these joints are 7 series elastic actuators.  The dimensions,  inertia, and other information concerning Baxter's arm can be obtained at \url{https://github.com/RethinkRobotics}.  
+
 \begin{figure*}
 \centering
 \def\svgwidth{.97\textwidth}%500pt}
-\input{loop.pdf_tex}
-\caption{Illustration of the loop approximated by a hexagon of links.  The frame at the end of link 1, frame $L_{e,1}$, is defined from $\mathcal{S}$ by the following steps: 1) rotation around $X$-axis by $\theta_1$ radians, 2) rotation around $Z$-axis by $\psi_1$ radians, 3) translation 0.5 meters along $Z$-axis, 4) rotation around $X$-axis by $2/3\pi$ radians.  The frame $L_{e,{i+1}}$ is obtained from $L_{e,i}$ through the same rotations and translations except for rotation values $\theta_{i}$ and $\psi_{i}$.  Finally, the end frame $\mathcal{E}$ is a rotation of $\theta_7$ around the $X$-axis of $L_{6,e}$.  When $\theta_1 = \cdots = \theta_7 = \psi_1 = \cdots = \psi_6 = 0$, the loop is a regular hexagon in the $Y-Z$ plane.  \textbf{a)} shows the loop for arbitrary rotation values which violate the holonomic constraints that the loop is ``closed''---i.e. $h\neq 0$ while \textbf{b)} shows rotation values that satisfy the constraint---i.e. $h = 0$.  Furthermore, we apply a wrench at the $L_{3,e}$ frame as shown by $F$ and gravity is in the negative $Z$ direction of the $\mathcal{O}$ frame. \textbf{c)} shows the link from $L_{1,e}$ to $L_{2,e}$ for non-zero $\theta_2$ and $\psi_1$. }
-\label{fig-loop}
+\input{loop_link.pdf_tex}
+\caption{Illustration of the spherical joint $i$ connecting links $i$ and $i+1$.  The joint is a rotation of $\theta_i$ radians about the $X$-axis followed by a rotation of $\psi_i$ radians about the $Y$-axis. }
+\label{fig-loop_link}
 \end{figure*}
+
+We use a discrete model of the loop.  The loop is composed of 12 rigid links wherein the connection between each rigid link is a spherical joint.  A single joint is shown in Figure~\ref{fig-loop_link}.  As seen in the figure, the orientation of the new link is given by the angles $\theta_i$ and $\psi_i$.  These rotations are described on a frame that is rotated about the $X-axis$ by $5\pi/6$ radians so that when each $\psi_i = \theta_i = 0$, the loop approximation is a regular dodecagon.  These angles, the $\theta_i$ and $\psi_i$, along with Baxter's joint angles make up the system configuration $q$.  
+
+We represent Baxter grasping the loop using a tree structure of transformations.  This tree structure is illustrated in Figure~\ref{fig-3bloops}a).  Starting from the base of Baxter, the arm is specified with successive rotation and translation transformations.  At Baxter's end effector, labeled $H$, the description branches, splitting the loop into two sides, marked with $\ell$ and $r$ for left and right.  The two branches meet at the base of the loop, where the loop is clamped.  For arbitrary Baxter and loop joint angles, $q$, there is no guarantee that the two ends of the loop meet at the clamping location in space.  When they do, we say that the system configuration satisfies the holonomic constraint $h(q) = 0$.  There are 12 total constraints---i.e. $h(q)\in\setR^{12}$---6 constraints for each side of the loop transformation description in order to constrain the orientation and position of frames $N_\ell$ and $N_r$ to the clamp location.  Figure~\ref{fig-3bloops} shows three different configurations $q$ that satisfy the constraints.
+
+\begin{figure*}
+\centering
+\def\svgwidth{.97\textwidth}
+\input{three_bloops.pdf_tex}
+\caption{Three distinct configurations.  \textbf{a)} The frames for Baxter and the loop in their initial configuration. \textbf{b)} Baxter ``twisting'' the loop. \textbf{c)} Baxter ``bending'' the loop.}
+\label{fig-3bloops}
+\end{figure*}
+
+We model the stiffness of the loop with torsional springs on each loop configuration variable---i.e. for each $\theta_i$ and $\psi_i$.  Due to the uniformity of the loop, we assume that all of the springs on the $\theta_i$ configuration variables have the same spring constant $\kappa_{\theta}$.  Likewise, each of the springs on $\psi_i$ configuration variables have same spring constant $\kappa_{\psi}$.  The goal of this section is to identify these spring constant and as such we set $a = [\kappa_{\theta}, \kappa_{\psi}]^T$.  
+
+\subsection{Simulation}
+The continuous state is given by $q$ and its time derivatives\textemdash i.e. $x(t) = [q(t),\dot{q}(t)]^T$.  Similarly, the system's discrete time state is $x_k = [q_k,p_k]^T$ where $p_k$ is defined in Eq.(\ref{eq-pk}).   The continuous dynamics are given by the constrained, forced Euler Lagrange equations, Eq.(\ref{eq-cont_EL}), which depends on the system Lagrangian $L(q,\dot{q},a)$, external forces $F_c(q,\dot{q},a,t)$ and holonomic constraints $h(q,a)$. Techniques to derive these formulas for rigid bodies are well understood \cite{murray_li_sastry}.  
+
+For the loop example, we model the center of mass of each link to be at the center of each link and that the mass of each link is $0.2$ Kg.  We assume some manipulator applies a force at frame $L_{3,e}$ as shown in Fig.~\ref{fig-loop}.  The force in the $L_{3,e}$ is $F = [20 \cos(t/50), 10 \cos(t/50 + \pi/3), 20 \cos(t/50 + 2\pi/3)]^T$.  Furthermore, we set the torsional spring constants as $\kappa_\theta = \kappa_\psi = 20$.  Later we identify these constants using the techniques in Section XXXXXXX.  
+
+With the continuous dynamics, it is straightforward to obtain the discrete dynamics, which are given in Eq.(\ref{eq-disc_EL}).  The discrete dynamics depend on the discrete system Lagrangian $L_d(q_{k},q_{k+1},a)$, discrete external left and right forces, $F_d^-(q_{k},q_{k+1},a,t_k,t_{k+1})$ and $F_d^+(q_{k},q_{k+1},a,t_k,t_{k+1})$, and holonomic constraints $h(q_k,a)$.  
+
+For simulation, we chose a constant time step $\Delta_t = t_k - t_{k+1}$ at each discrete time $k$.  Further, we decided to approximate $L_d$ from $L$ using midpoint rule (see Eq.(\ref{eq-Ld})):
+\begin{equation}
+L_d(q_k,q_{k+1},a) = \Delta_t L(\frac{q_{k+1}+q_k}{2},\frac{q_{k+1}-q_k}{\Delta_t},a).
+\label{eq-Ld}
+\end{equation}
+Similarly, using midpoint rule, we approximate $F_c$ by $F_d^-$ and $F_d^+$ where
+\begin{equation}
+\left\{
+\begin{array}{l}
+F_d^-(q_k,q_{k+1},a,t_k,t_{k+1}) = \\\hspace{70pt}\Delta_t F_c(\frac{q_{k+1}+q_k}{2},\frac{q_{k+1}-q_k}{\Delta_t},a,\frac{t_{k+1}+t_k}{2})\\
+F_d^+(q_k,q_{k+1},a,t_k,t_{k+1}) = 0.
+\end{array}
+\right.
+\label{eq-Fd}
+\end{equation}
+Therefore, once the continuous system has been modeled it is simple to translate it to discrete time.  Finally, in order to simulate the dynamics using the one-step mapping in Eq.(\ref{eq-fk}), we additionally need certain partial derivatives of the Lagrangian, external forces and constraints with respect to configuration variables, which can be found in \cite{johnson_murphey_scalable}.  
+
+\emph{Aside:}  We used the software tool TREP \cite{johnson_murphey_scalable} which simulates articulated rigid bodies using midpoint variational integrators.  Furthermore, it provides additional partial derivative calculations that we need for the system linearization, Eqs.(\ref{eq-A}) and (\ref{eq-B}).  
+
+
+
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+%\begin{figure*}
+%\centering
+%\def\svgwidth{.97\textwidth}%500pt}
+%\input{loop.pdf_tex}
+%\caption{Illustration of the loop approximated by a hexagon of links.  The frame at the end of link 1, frame $L_{e,1}$, is defined from $\mathcal{S}$ by the following steps: 1) rotation around $X$-axis by $\theta_1$ radians, 2) rotation around $Z$-axis by $\psi_1$ radians, 3) translation 0.5 meters along $Z$-axis, 4) rotation around $X$-axis by $2/3\pi$ radians.  The frame $L_{e,{i+1}}$ is obtained from $L_{e,i}$ through the same rotations and translations except for rotation values $\theta_{i}$ and $\psi_{i}$.  Finally, the end frame $\mathcal{E}$ is a rotation of $\theta_7$ around the $X$-axis of $L_{6,e}$.  When $\theta_1 = \cdots = \theta_7 = \psi_1 = \cdots = \psi_6 = 0$, the loop is a regular hexagon in the $Y-Z$ plane.  \textbf{a)} shows the loop for arbitrary rotation values which violate the holonomic constraints that the loop is ``closed''---i.e. $h\neq 0$ while \textbf{b)} shows rotation values that satisfy the constraint---i.e. $h = 0$.  Furthermore, we apply a wrench at the $L_{3,e}$ frame as shown by $F$ and gravity is in the negative $Z$ direction of the $\mathcal{O}$ frame. \textbf{c)} shows the link from $L_{1,e}$ to $L_{2,e}$ for non-zero $\theta_2$ and $\psi_1$. }
+%\label{fig-loop}
+%\end{figure*}
 
 As an example, we model a flexible loop and manipulate it at a contact point in order to ascertain its stiffness properties.  The loop model is composed of 6 links forming a hexagon as shown in Fig.~\ref{fig-loop}.  Each joint has two configuration variables, labeled $\theta_i$ and $\psi_i$.  The configuration variables constitute rotations around the X-axis and Z-axis, respectively, of frame $L_{i,e}$.  We attach the 6 links starting from the start frame $\mathcal{S}$.  Therefore, the position and orientation of the frame at the end of the $i^\textrm{th}$ link, frame $L_{i,e}$, depends on the configuration variables $\theta_1,\ldots,\theta_{i-1}$ and $\psi_1,\ldots,\psi_{i-1}$.  
 
