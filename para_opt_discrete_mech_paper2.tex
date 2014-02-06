@@ -86,20 +86,15 @@
 
 \author{T. M. Caldwell and  D. Coleman and N. Correll% <-this % stops a space
 \thanks{
-This material is .....}%
+This work was supported by a NASA
+Early Career Faculty fellowship NNX12AQ47GS02. We are grateful for this support.}%
 }
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-%This paper considers the problem of optimal parameter identification of flexible objects using variational integrators for simulation.  The example object is 
-
-
-
-%We provide a discrete-time adjoint-based gradient calculation 
-
- %and apply it to identifying the stiffness properties of a flexible loop.  
+We present a method for system identification of flexible objects. We model the object's structure and flexibility by a chain of rigid bodies connected by torsional springs. Unlike previous work, the proposed optimal control approach using variational integrators allows identifying closed loops, including the flexibility of the robot arm itself. This allows using the resulting models for planning in configuration space of the robot. In order to solve the resulting problem efficiently, we develop a novel method for fast discrete-time adjoint-based gradient calculation. The feasibility of the approach is demonstrated using full physics simulation using Trep and using data recorded using a 7-DOF series elastic robot arm.
 \end{abstract}
 
 \section{Introduction}
@@ -145,10 +140,10 @@ This paper is organized as follows: Section \ref{sec-sys} reviews continuous and
 
 \section{Mechanical Systems}
 \label{sec-sys}
-A comparison of continuous time and discrete time mechanical systems is presented.  The mechanical system depends on $n_a$ system parameters from the parameter space $\mathcal{P}\in\setR^m$. The mechanical system has $n_q$ generalized coordinates $q\in\setR^{n_q}$.  For continuous time, $q$ varies with the continuous variable $t$\textemdash e.g. $q(t)$\textemdash for $t$ in the interval $[0,t_f]$, $t_f>0$.  Likewise, for the discrete representation, $q$ varies with the discrete variable $k$\textemdash e.g. $q_k$\textemdash for $k$ in the set $\mathcal{K}:=\{0,1,\ldots,k_f\}$, $k_f>0$.  Each discrete time $k$ pairs with a continuous time, labeled $t_k$, where $t_0 = 0$, $t_{k_f} = t_f$ and $t_k<t_{k+1}$. This section presents the continuous and discrete dynamics dependent on the parameters $\rho\in\mathcal{P}$.  The continuous dynamics are provided for comparison with the discrete system, in which the paper results are given.
+A comparison of continuous time and discrete time mechanical systems is presented to introduce the models and notation used in this paper.  The mechanical system depends on $n_a$ system parameters from the parameter space $\mathcal{P}\in\setR^m$. The mechanical system has $n_q$ generalized coordinates $q\in\setR^{n_q}$.  For continuous time, $q$ varies with the continuous variable $t$\textemdash e.g. $q(t)$\textemdash for $t$ in the interval $[0,t_f]$, $t_f>0$.  Likewise, for the discrete representation, $q$ varies with the discrete variable $k$\textemdash e.g. $q_k$\textemdash for $k$ in the set $\mathcal{K}:=\{0,1,\ldots,k_f\}$, $k_f>0$.  Each discrete time $k$ pairs with a continuous time, labeled $t_k$, where $t_0 = 0$, $t_{k_f} = t_f$ and $t_k<t_{k+1}$. This section presents the continuous and discrete dynamics dependent on the parameters $\rho\in\mathcal{P}$.  The continuous dynamics are provided for comparison with the discrete system, in which the paper results are given.
 
 \subsection{Continuous Mechanical System}
-We review continuous mechanical systems for reference with discrete mechanical systems.  A mechanical system's evolution is given by the path of least action.  The system's action is 
+We will first review continuous mechanical systems for reference with discrete mechanical systems.  A mechanical system's evolution is given by the path of least action.  The system's action is 
 \[
 S = \int_0^{t_f}L(q(\tau),\dot{q}(\tau),\rho)d\tau
 \]
