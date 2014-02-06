@@ -122,7 +122,7 @@ the vast theory of rigid body mechanics is relevant \cite{murray_li_sastry}. Als
 % How do you determine success?
 We use Rethink Robotics' Baxter \cite{guizzo2011rethink} robot to both manipulate and measure the loop.  Each of Baxter's arms have 7 degrees of freedom.  The arms are designed for compliance since each joint has series elastic actuators that allows for force sensing and control.  An illustration of Baxter manipulating a 12 link approximation of a loop is in Figure~\ref{fig-3bloops} in Section \ref{sec-experiment}.
 
-A good representation of a flexible object is not enough to accurately model it.  We also need the model simulation to be consistent with the physical behavior of the loop.  We decided not to apply Euler integration or another low order integrator to the continuous dynamics, as is the case in \cite{sahari_etal}, because such integrators can introduce significant energy errors.  At worst these errors will destabilize the integration and at best compromise the model's energy dissipation \cite{johnson_murphey_scalable}.  Instead we decided to use \emph{variational integrators}.  Variational integrators can be used to describe discrete-time equations of motion of a mechanical system.  They are designed from the least action principle and have good properties that match known physical phenomenon like preserving---or nearly preserving---conservation of energy and momentum \cite{johnson_murphey_scalable, marsden_west}.
+A good representation of a flexible object is not enough to accurately model it.  We also need the model simulation to be consistent with the physical behavior of the loop.  We decided not to apply Euler integration or another low order integrator to the continuous dynamics, as is the case in \cite{sahari_etal}, because such integrators can introduce significant energy errors.  At worst these errors will destabilize the integration and at best compromise the model's energy dissipation \cite{johnson_murphey_scalable}.  Instead we decided to use \emph{variational integrators}.  Variational integrators can be used to describe discrete-time equations of motion of a mechanical system.  They are designed from the least action principle and have good properties that agree with known physical phenomenon like stable energy behavior \cite{pekarek_murphey}.
 
 Furthermore, variational integrators elegantly handle holonomic constraints.  Holonomic constraints are specified as $h(q) = 0$, where $q$ is the system's configuration.  They are used to constrain positions and orientations.  For the example, we use holonomic constraints to ``close the loop''---i.e. to constrain the link at one end of the loop to the other end.  In simulating continuous dynamics, holonomic constraints are handled with equivalent constraints on the acceleration that creep due to numerical integration error.  In comparison, variational integrators apply holonomic constraints directly and do not have this issue (see \cite{johnson_murphey_scalable} for a discussion).
 
@@ -130,7 +130,7 @@ Due to recent work by Johnson and Murphey \cite{johnson_murphey_scalable, johnso
 
 With a model and simulation to predict the motion of a flexible object, unknown model quantities, referred to as parameters, can be identified.  These model parameters may be lengths, masses, or damping coefficients.  For the example, we assume the loop's stiffness is unknown.  As such, the goal is to obtain the spring constants of the torsional springs at the loop model's joints.  In this paper, this is done using an optimal control approach.
 
-The parameter identification optimization problem is set up as a discrete-time Bolza problem.  For the loop example, the cost functional is a summation of the joint errors between the simulated joint angles and the experimentally-measured joint angles.  The joint error directly correlates to the difference between the simulated loop displacement and the measured loop displacement, at least at the manipulator.  Alternatively, the cost can be given by a maximum likelihood estimate for which the cost is lower for parameters that correspond to the simulation that is most consistent with the measurement (see \cite{houska_etal}).  
+The parameter identification optimization problem is set up as a discrete-time Bolza problem.  For the loop example, the cost functional is a summation of the error between the simulated end effector position and the experimentally-measured end effector position.  The joint error directly correlates to the difference between the simulated loop displacement and the measured loop displacement, at least at the manipulator.  Alternatively, the cost can be given by a maximum likelihood estimate for which the cost is lower for parameters that correspond to the simulation that is most consistent with the measurement (see \cite{houska_etal}).  
 
 \subsection{Contribution of this paper}
 The paper's contributions are twofold.  First, it provides a discrete-time adjoint-based gradient calculation for optimal parameter estimation.  Second, it formulates model parameter identification of flexible objects with variational integrators for greater confidence in the simulations' consistency with known physical properties.
@@ -493,22 +493,31 @@ Repeating the derivation for $D_3D_2L_d(q_k,q_{k+1},\rho)$ we find that $D_3D_2L
 Furthermore, we need to calculate $D_1h(q_k,\rho)$, $D_1^2h(q_k,\rho)$ and $D_1D2h(q_k,\rho)$, the last of which is $0$ since the constraints do not depend on the parameters.  These partial derivatives of $h$ are given simply by the chain rule and depend on the first and second partial derivatives of the transformations from the world frame $W$ to frames $N_r$ and $N_\ell$ (refer to Figure~\ref{fig-3bloops} for the frames).  These partial derivatives can be found in \cite{johnson_murphey_linearization}.  
 
 \subsection{Optimal Parameter Identification}
-%\begin{figure}
-%\centering
-%\includegraphics[width = 250pt]{bloop_convergence.pdf}
-%\caption{Convergence of the optimization algorithm.}
-%\label{fig-conv}
-%\end{figure}
-
 With the linearization of the discrete state equations, Eq.(\ref{eq-fk}), we can calculate the gradient of a cost from Lemma \ref{lem-grad_a} in a steepest descent algorithm to identify the model parameters $\rho = [\kappa_\theta,\kappa_\psi]^T$.  The experiment is set up as in Section \ref{sec-setup}.  We program the experimental Baxter arm to stretch, bend and twist the loop over a 20 second time frame. The joint torques to displace the loop are recorded in $T_{meas}$ while joint angles are recorded in $b_{meas}$.    For fixed parameters $\rho$, the system can be simulated as discussed in Section \ref{sec-sys} using $T_{meas}$.  We wish to find the simulated Baxter arm joint angles, labelled $b$---recall $b$ are the configuration variables of $q$ that describe the Baxter arm---that best match $b_{meas}$.
 
-The matching is quantified by the cost $J_d$.  We choose $J_d$ to be quadratic on the error of $b$ from $b_{meas}$.   Set $\epsilon_k := b_k-b_{meas}(t_k)$.  The cost $J_d$ is defined by the running cost $\ell_d(q_k,\rho)$ and the terminal cost $m_d(q_{k_f},\rho)$.  We set them to
+The matching is quantified by the cost $J_d$.  We choose $J_d$ to be quadratic on the error from the simulated end effector position in space to the measured end effector position, which can be derived from $b$ and $b_{meas}$ respectively.   Label $w_k(\rho)$ as this simulated position at time $t_k$ for parameters $\rho$ and $w_{meas}(t_k)$ as this measured position.  Set $\epsilon_k := w_k(\rho)-w_{meas}(t_k)$.  The cost $J_d$ is defined by the running cost $\ell_d(q_k,\rho)$ and the terminal cost $m_d(q_{k_f},\rho)$, set as
 \[
 \ell_d(q_k,\rho) = \epsilon_k^T\epsilon_k \textrm{ and } m_d(q_{k_f},\rho) = \epsilon_{k_f}^T\epsilon_{k_f}
 \]
 We perform the optimization using a steepest descent algorithm with the inequality constraint that the parameters are $\kappa_\theta>0$ and $\kappa_\psi>0$.    At each iteration of the descent, an Armijo line search updates the parameters by choosing a distance to step in the direction of the negative gradient.  We used Armijo parameters $\alpha = \beta = 0.4$ \cite{armijo}.
 
-We seed the steepest descent algorithm with an initial guess of $\rho = [10, 10]^T$.  After $XXXXXXXX$ iterations, the algorithm terminated with gradient norm $DJ_d(\rho) = XXXXXX$.  The parameters were identified as $[XXXXXX,XXXXXX]^T$.  The convergence is shown in XXXXX.%Fig.~\ref{fig-conv}.
+We seed the steepest descent algorithm with an initial guess of $\rho = [5, 5]^T$.  After $75$ iterations, the algorithm terminated with gradient norm $DJ_d(\rho) = 0.001138$.  The parameters were identified as $\rho^\star = [4.4525252882477062, 0.96969286047029135]^T$.  The convergence is shown in Fig.~\ref{fig-conv}.
+Furthermore, a comparison of the simulated end effector's path for each iteration of steepest descent with Baxter's measured end effector's path is in Fig.~\ref{fig-paths}.  In agreement that the cost descreased with iteration, it appears in the figure that the end effector's path converged toward the measured end effector's path.
+
+For the example, optimally identifying a 12-link (31 configurations total) model from 20 seconds of manipulation activity (2000 data points recorded at 100Hz) takes 219.05 minutes on a Macbook air. 
+\begin{figure}
+\centering
+\includegraphics[width = 220pt]{conv_12_links.pdf}
+\caption{Convergence of the optimization algorithm.}
+\label{fig-conv}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[width = 220pt]{paths12.pdf}
+\caption{The path the robot's end effector took through space.  The black line is the measured end effector's path while the yellow lines are the end effector's simulated path for each iteration of the steepest descent algorithm.  The iteration numbers are ordered from lighter yellow to darker yellow.  It appears that the later iterations' paths are converging toward the measured path. }
+\label{fig-paths}
+\end{figure}
 
 \section{Discussion}
 Through the proposed parameter identification procedure, we calculated the model parameters that best match physical phenomena within the constraint of the chosen model.  This process is important since an improved model can make for better object manipulation.  However, it is unclear, especially in the presented experiment, what this matching tells us about the object's physical properties.  Certainly, measuring at a single contact point provides little insight into the interior stress and strain of the rubber loop.
