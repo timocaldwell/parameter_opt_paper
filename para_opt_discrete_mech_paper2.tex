@@ -120,7 +120,7 @@ the vast theory of rigid body mechanics is relevant \cite{murray_li_sastry}. Als
 \end{figure}
 
 % How do you determine success?
-We use Rethink Robotics' Baxter \cite{guizzo2011rethink} robot to both manipulate and measure the loop.  Each of Baxter's arms have 7 degrees of freedom.  The arms are designed for compliance since each joint has series elastic actuators that allows for force sensing and control.  An illustration of Baxter manipulating a 12 link approximation of a loop is in Figure~\ref{fig-bloop_experiment}.
+We use Rethink Robotics' Baxter \cite{guizzo2011rethink} robot to both manipulate and measure the loop.  Each of Baxter's arms have 7 degrees of freedom.  The arms are designed for compliance since each joint has series elastic actuators that allows for force sensing and control.  An illustration of Baxter manipulating a 12 link approximation of a loop is in Figure~\ref{fig-3bloops} in Section \ref{sec-experiment}.
 
 A good representation of a flexible object is not enough to accurately model it.  We also need the model simulation to be consistent with the physical behavior of the loop.  We decided not to apply Euler integration or another low order integrator to the continuous dynamics, as is the case in \cite{sahari_etal}, because such integrators can introduce significant energy errors.  At worst these errors will destabilize the integration and at best compromise the model's energy dissipation \cite{johnson_murphey_scalable}.  Instead we decided to use \emph{variational integrators}.  Variational integrators can be used to describe discrete-time equations of motion of a mechanical system.  They are designed from the least action principle and have good properties that match known physical phenomenon like preserving---or nearly preserving---conservation of energy and momentum \cite{johnson_murphey_scalable, marsden_west}.
 
@@ -140,14 +140,16 @@ This paper is organized as follows: Section \ref{sec-sys} reviews continuous and
 
 \section{Mechanical Systems}
 \label{sec-sys}
-A comparison of continuous time and discrete time mechanical systems is presented to introduce the models and notation used in this paper.  The mechanical system depends on $n_a$ system parameters from the parameter space $\mathcal{P}\in\setR^m$. The mechanical system has $n_q$ generalized coordinates $q\in\setR^{n_q}$.  For continuous time, $q$ varies with the continuous variable $t$\textemdash e.g. $q(t)$\textemdash for $t$ in the interval $[0,t_f]$, $t_f>0$.  Likewise, for the discrete representation, $q$ varies with the discrete variable $k$\textemdash e.g. $q_k$\textemdash for $k$ in the set $\mathcal{K}:=\{0,1,\ldots,k_f\}$, $k_f>0$.  Each discrete time $k$ pairs with a continuous time, labeled $t_k$, where $t_0 = 0$, $t_{k_f} = t_f$ and $t_k<t_{k+1}$. This section presents the continuous and discrete dynamics dependent on the parameters $\rho\in\mathcal{P}$.  The continuous dynamics are provided for comparison with the discrete system, in which the paper results are given.
+In order to identify model parameters of a mechanical system, we must first be able to specify equations for simulation as well as model based calculations like linearizations.  This section reviews continuous and discrete time mechanical systems, where the latter is with respect to variational integrators.  A continuous mechanical system depends on its system Lagrangian which is the difference of its kinetic and potential energies.  From the Lagrangian, the system's equations of motion can be derived from the Euler Lagrange or similar equations depending on whether the system's movement is constrained or is externally forced.  The discrete mechanical system's equations of motion are similary derived.  For the experiment, these equations predict how the Baxter arm moves as well as how it manipulates and deforms the loop.  These equations can only describe the deformation due to how we discretize the flexible behavior of the loop.
+
+The mechanical system depends on $n_\rho$ system parameters from the parameter space $\mathcal{P}\in\setR^m$. The mechanical system has $n_q$ generalized coordinates $q\in\setR^{n_q}$.  For continuous time, $q$ varies with the continuous variable $t$\textemdash e.g. $q(t)$\textemdash for $t$ in the interval $[0,t_f]$, $t_f>0$.  Likewise, for the discrete representation, $q$ varies with the discrete variable $k$\textemdash e.g. $q_k$\textemdash for $k$ in the set $\mathcal{K}:=\{0,1,\ldots,k_f\}$, $k_f>0$.  Each discrete time $k$ pairs with a continuous time, labeled $t_k$, where $t_0 = 0$, $t_{k_f} = t_f$ and $t_k<t_{k+1}$. This section presents the continuous and discrete dynamics dependent on the parameters $\rho\in\mathcal{P}$.  The continuous dynamics are provided for comparison with the discrete system, in which the paper results are given.
 
 \subsection{Continuous Mechanical System}
 We will first review continuous mechanical systems for reference with discrete mechanical systems.  A mechanical system's evolution is given by the path of least action.  The system's action is 
 \[
 S = \int_0^{t_f}L(q(\tau),\dot{q}(\tau),\rho)d\tau
 \]
-where $L(q,\dot{q},\rho) := KE(q,\dot{q},\rho) - V(q,\rho)$, the system Lagrangian, is the difference of the system's kinetic energy, $KE$, with its potential energy, $V$.  For this paper, we assume that both kinetic and potential energies depend on system parameters $\rho\in\mathcal{P}$.  Possible parameters of $L$ are lengths, spring constants, and masses. 
+where $L(q,\dot{q},\rho) := KE(q,\dot{q},\rho) - V(q,\rho)$, the system Lagrangian, is the difference of the system's kinetic energy, $KE$, with its potential energy, $V$.  For this paper, we assume that both kinetic and potential energies depend on system parameters $\rho\in\mathcal{P}$.  Possible parameters of $L$ include lengths, spring constants, and masses. 
 
 As is common in mechanical systems, we wish to include external forces, $F_c(q,\dot{q},\rho,t)$.  This term is the total external forcing in generalized coordinates, which we also assume depends on the parameters $\rho\in\mathcal{P}$, such as damping coefficients.  By including the additional external force term $F_c$ to the action, the Lagrange d'Alembert principle finds that the continuous dynamics of the mechanical system are given by the forced Euler-Lagrange equations \cite{murray_li_sastry}:
 \[
@@ -177,7 +179,7 @@ L_d(q_k,q_{k+1},\rho) \approx \int_{t_k}^{t_{k+1}}L(q(\tau),\dot{q}(\tau),\rho)d
 \end{equation}
 The integration can be approximated with a quadrature like midpoint or trapezoidal rules.  Refer to \cite{johnson_murphey_scalable} for details of using midpoint rule, which we use in the example.  
 
-Similarly, external forcing is included by approximating $F_c$ with the discrete left and right forces $F_d^-(q_k,q_{k+1},\rho,t_k,t_{k+1})$ and $F_d^+(q_k,q_{k+1},\rho,t_k,t_{k+1})$ using a quadrature.  In addition, the $n_h$ holonomic constraints $h(q_k,\rho)$ can be enforced with the $n_h$ Lagrange multipliers $\lambda_k$.  Given the discrete Lagrangian, discrete forces, and holonomic constraints the forced discrete Euler-Lagrange equations are \cite{johnson_murphey_scalable}:
+Similarly, external forcing is included by approximating $F_c$ with the discrete left and right forces $F_d^-(q_k,q_{k+1},\rho,t_k,t_{k+1})$ and $F_d^+(q_k,q_{k+1},\rho,t_k,t_{k+1})$ using a quadrature.  In addition, the $n_h$ holonomic constraints $h(q_k,\rho)$ can be enforced with the $n_h$ Lagrange multipliers $\lambda_k$.  Given the discrete Lagrangian, discrete forces, and holonomic constraints the forced discrete Euler-Lagrange equations are \cite{johnson_murphey_scalable}:\footnote{The notation $D_i$ slot derivatives of slot $i$.  For example, $D_2 L_d(q_{k-1},q_{k},\rho)$ is the partial of $L_d$ with respect to the second slot, $q_{k}$.}
 \begin{equation}
 \left\{\begin{array}{l}
 D_2 L_d(q_{k-1},q_{k},\rho) + F_d^+(q_{k-1},q_{k},\rho,t_{k-1},t_{k}) \\\hspace{20pt}+ D_1L_d(q_k,q_{k+1},\rho) + F_d^-(q_k,q_{k+1},\rho,t_k,t_{k+1}) \\\hspace{20pt} - D_1h^T(q_k,\rho)\lambda_k= 0 \\
@@ -267,7 +269,10 @@ where $\frac{\partial \lambda}{\partial q_k}$ can be found in \cite{johnson_murp
 %C_k = \frac{\partial q_{k+1}}{\partial p_k}\frac{\partial p_{k}}{\partial a} + \frac{\partial q_{k+1}}{\partial q_k}\frac{\partial q_{k}}{\partial a} \\\hspace{0pt}- M_{k+1}^{-1}[D_3D_1L_d(q_k,q_{k+1},\rho) + D_3F_d^-(q_k,q_{k+1},\rho,t_k,t_{k+1}) \\\hspace{0pt} - D_1D_2h^T(q_k,\rho)\lambda_k] 
 %\end{array}
 %\]
-The term $B_k$ depends on $A_k$ and the previous term $B_{k-1}$. The linearization of Eq.(\ref{eq-fk}) is needed for calculations of the parameter identification gradient.
+The term $B_k$ depends on $A_k$ and the previous term $B_{k-1}$. 
+
+We use the equations of motion of discrete mechanical system, Eq.(\ref{eq-fk}), as well as its linearization, Eqs.(\ref{eq-A}) and (\ref{eq-B}) for simulation and calculating the parameter identification gradient.  
+
 
 % In order to obtain the term $\frac{\partial \lambda_k}{\partial a}$, start with $\frac{\partial}{\partial a}[h(q_{k+1},\rho) = 0]$ which is
 %\[
@@ -310,9 +315,9 @@ In optimal control theory, it is common practice to solve optimization problems 
 The gradient of the cost functional given in problem \ref{prob-disc} is provided in the following lemma.
 \begin{lemma}
 \label{lem-grad_a}
-Suppose $L_d(q_k,q_{k+1},\rho)$, $F_d^-(q_k,q_{k+1},\rho,t_k,t_{k+1})$, $F_d^+(q_k,q_{k+1},\rho,t_k,t_{k+1})$, and $h(q_k,\rho)$ are $\mathcal{C}^2$ with respect to $q_k$, $q_{k+1}$ and $\rho$.  Take $A_k$ and $B_k$ from Eq.(\ref{eq-lin_fk}) and assume $M_k$ is always nonsingular.  Then,
+Suppose $L_d(q_k,q_{k+1},\rho)$, $F_d^-(q_k,q_{k+1},\rho,t_k,t_{k+1})$, $F_d^+(q_k,q_{k+1},\rho,t_k,t_{k+1})$, and $h(q_k,\rho)$ are $\mathcal{C}^2$ with respect to $q_k$, $q_{k+1}$ and $\rho$.  Take $A_k$ and $B_k$ from Eq.(\ref{eq-lin_fk}) and assume $M_k$ is always nonsingular.  Then,\footnote{The notation $D$ is a slot derivative for a function of only one slot.  For example, $DJ_d(\rho)$ is the partial derivative of $J_d$ with repsect to $\rho$.}
 \begin{equation}
-DJ_d(a) = \sum_{k = 1}^{k_f}\lambda_kB_{k-1} +D_2\ell_d(x_k,\rho) + D_2m_d(x_{k_f},\rho)
+DJ_d(\rho) = \sum_{k = 1}^{k_f}\lambda_kB_{k-1} +D_2\ell_d(x_k,\rho) + D_2m_d(x_{k_f},\rho)
 \label{eq-DJa}
 \end{equation}
 where $\lambda_k$ is the solution to the backward one-step mapping
@@ -323,10 +328,10 @@ where $\lambda_k$ is the solution to the backward one-step mapping
 starting from $\lambda_{k_f} = D_1\ell(x_{k_f},\rho) + D_1m_d(x_{k_f},\rho)$.  
 \end{lemma}
 \begin{proof}
-The derivative of the cost in the direction $\theta\in\setR^{n_a}$ is
+The derivative of the cost in the direction $\theta\in\setR^{n_\rho}$ is
 \begin{equation}
 \begin{array}{l}
-DJ_d(a)\theta:=\sum_{k=1}^{k_f}D_1\ell_d(x_k,\rho)\frac{\partial x_k}{\partial \theta} + D_2\ell_d(x_k,\rho)\theta \\\hspace{20pt}+ D_1m_d(x_{k_f},\rho)\frac{\partial x_{k_f}}{\partial \theta} + D_2m_d(x_{k_f},\rho)\theta.
+DJ_d(\rho)\theta:=\sum_{k=1}^{k_f}D_1\ell_d(x_k,\rho)\frac{\partial x_k}{\partial \theta} + D_2\ell_d(x_k,\rho)\theta \\\hspace{20pt}+ D_1m_d(x_{k_f},\rho)\frac{\partial x_{k_f}}{\partial \theta} + D_2m_d(x_{k_f},\rho)\theta.
 \end{array}
 \label{eq-DJ_dot_theta}
 \end{equation}
@@ -367,21 +372,31 @@ H = \sum_{s=0}^{k_f-1} \lambda_{s+1} B_s\theta = \sum_{k=1}^{k_f} \lambda_{k} B_
 \]
 The efficient calculation for $\lambda_k$ is given in Eq.(\ref{eq-lambda}).  Plugging $H$ into Eq.(\ref{eq-DJ_dot_theta}), we find
 \[
-DJ(a)\theta = \Big[\sum_{k = 1}^{k_f}\lambda_kB_{k-1} +D_2\ell_d(x_k,\rho) + D_2m_d(x_{k_f},\rho)\Big]\theta
+DJ(\rho)\theta = \Big[\sum_{k = 1}^{k_f}\lambda_kB_{k-1} +D_2\ell_d(x_k,\rho) + D_2m_d(x_{k_f},\rho)\Big]\theta
 \]
 and the proof is finished.
 \end{proof}
 
 \section{Experiment}
 \label{sec-experiment}
-\begin{figure}[!htb]
-\centering
-\includegraphics[width = 220pt]{init_bloop}
-\caption{Illustration of Baxter manipulating a rubber loop approximated by 12 links connected by torsional springs.}
-\label{fig-bloop_experiment}
-\end{figure}
 
-The goal is to identify the model parameters of a flexible loop that best match experimental measurements of a flexible loop with only touch at single point of contact.  For the measuring and manipulating, we use Rethink Robotics' Baxter robot, shown in Figure~\ref{fig-baxter_image_1}. We simulate this interaction using a discrete model of the loop shown in Figure \ref{fig-bloop_experiment}. The simulated arm joint angles and torques depend on the parameters set for a simulation.  As such, we can find the parameters which correspond to simulated joint angles that best match the measured joint angles.  For this experiment, the unknown parameters describe the stiffness of the loop model.
+%\begin{figure}[!htb]
+%\centering
+%\includegraphics[width = 220pt]{init_bloop}
+%\caption{Illustration of Baxter manipulating a rubber loop approximated by 12 links connected by torsional springs.}
+%\label{fig-bloop_experiment}
+%\end{figure}
+
+\begin{figure*}
+\centering
+\def\svgwidth{.97\textwidth}
+\input{three_bloops.pdf_tex}
+\caption{Three distinct configurations.  \textbf{a)} The frames for Baxter and the loop in their initial configuration. \textbf{b)} Baxter ``twisting'' the loop. \textbf{c)} Baxter ``bending'' the loop.}
+\label{fig-3bloops}
+\end{figure*}
+
+
+The goal is to identify the model parameters of a flexible loop that best match experimental measurements of a flexible loop with only touch at single point of contact.  For the measuring and manipulating, we use Rethink Robotics' Baxter robot, shown in Figure~\ref{fig-baxter_image_1}. We simulate this interaction using a discrete model of the loop shown in Figure \ref{fig-3bloops}. The simulated arm joint angles and torques depend on the parameters set for a simulation.  As such, we can find the parameters which correspond to simulated joint angles that best match the measured joint angles.  For this experiment, the unknown parameters describe the stiffness of the loop model.
 
 The tools for simulating Baxter manipulating a loop are given in Section \ref{sec-sys} while the optimization technique for best matching the simulation to the measured data is described in Section \ref{sec-opt}.  The following provides the experimental setup, the model and simulation of Baxter manipulating the loop, and the results of optimally identifying loop parameters.
 
@@ -404,14 +419,6 @@ We model Baxter and the loop with the same underlying rigid body mechanics.  We 
 We use a discrete model of the loop.  The loop is composed of 12 rigid links wherein the connection between each rigid link is a spherical joint.  A single loop joint is shown in Figure~\ref{fig-loop_link}.  As seen in the figure, the orientation of the new link is given by the angles $\theta_i$ and $\psi_i$.  These rotations are described on a frame that is rotated about the $X-axis$ by $5\pi/6$ radians so that when each $\psi_i = \theta_i = 0$, the loop approximation is a regular dodecagon.  These angles, the $\theta_i$ and $\psi_i$, along with Baxter's joint angles, $b$, make up the system configuration $q$. Note that the choice of the discretization is arbitrary and only dependent on the required fidelity of the model as well as available computational time. 
 
 We represent Baxter grasping the loop using a tree structure of transformations.  This tree structure is illustrated in Figure~\ref{fig-3bloops}a).  Starting from the world frame $\mathcal{W}$, the arm is specified with successive rotation and translation transformations.  At Baxter's end effector, labeled $H$, the description branches, splitting the loop into two sides, marked with $\ell$ and $r$ for left and right.  The two branches meet at the base of the loop, where the loop is clamped.  For arbitrary Baxter and loop joint angles, $q$, there is no guarantee that the two ends of the loop meet at the clamping location in space.  When they do, we say that the system configuration satisfies the holonomic constraint $h(q) = 0$.  There are 12 total constraints---i.e. $h(q)\in\setR^{12}$.  There are 6 constraints for each side of the loop transformation description in order to constrain the orientation and position of frames $N_\ell$ and $N_r$ to the clamp location.  Figure~\ref{fig-3bloops} shows three different configurations $q$ that satisfy the constraints.
-
-\begin{figure*}
-\centering
-\def\svgwidth{.97\textwidth}
-\input{three_bloops.pdf_tex}
-\caption{Three distinct configurations.  \textbf{a)} The frames for Baxter and the loop in their initial configuration. \textbf{b)} Baxter ``twisting'' the loop. \textbf{c)} Baxter ``bending'' the loop.}
-\label{fig-3bloops}
-\end{figure*}
 
 We model the stiffness of the loop with torsional springs on each loop configuration variable---i.e. for each $\theta_i$ and $\psi_i$.  Due to the uniformity of the loop, we assume that all of the springs on the $\theta_i$ configuration variables have the same spring constant $\kappa_{\theta}$.  Likewise, each of the springs on $\psi_i$ configuration variables have same spring constant $\kappa_{\psi}$.  The objective is to identify these spring constant and as such we set $\rho = [\kappa_{\theta}, \kappa_{\psi}]^T$, where $\mathcal{P} = \setR^+ \times \setR^+$.  
 
@@ -492,13 +499,13 @@ Furthermore, we need to calculate $D_1h(q_k,\rho)$, $D_1^2h(q_k,\rho)$ and $D_1D
 %\label{fig-conv}
 %\end{figure}
 
-With the linearization of the discrete state equations, Eq.(\ref{eq-fk}), we can calculate the gradient of a cost from Lemma \ref{lem-grad_a} in a steepest descent algorithm to identify the model parameters $\rho = [\kappa_\theta,\kappa_\psi]^T$.  The experiment is set up as in Section \ref{sec-setup}.  We program the experimental Baxter arm to stretch, bend and twist the loop.  The joint torques to displace the loop are recorded in $T_{meas}$ while joint angles are recorded in $b_{meas}$.    For fixed parameters $\rho$, the system can be simulated as discussed in Section \ref{sec-sys} using $T_{meas}$.  We wish to find the simulated Baxter arm joint angles, labelled $b$---recall $b$ are the configuration variables of $q$ that describe the Baxter arm---that best match $b_{meas}$.
+With the linearization of the discrete state equations, Eq.(\ref{eq-fk}), we can calculate the gradient of a cost from Lemma \ref{lem-grad_a} in a steepest descent algorithm to identify the model parameters $\rho = [\kappa_\theta,\kappa_\psi]^T$.  The experiment is set up as in Section \ref{sec-setup}.  We program the experimental Baxter arm to stretch, bend and twist the loop over a 20 second time frame. The joint torques to displace the loop are recorded in $T_{meas}$ while joint angles are recorded in $b_{meas}$.    For fixed parameters $\rho$, the system can be simulated as discussed in Section \ref{sec-sys} using $T_{meas}$.  We wish to find the simulated Baxter arm joint angles, labelled $b$---recall $b$ are the configuration variables of $q$ that describe the Baxter arm---that best match $b_{meas}$.
 
 The matching is quantified by the cost $J_d$.  We choose $J_d$ to be quadratic on the error of $b$ from $b_{meas}$.   Set $\epsilon_k := b_k-b_{meas}(t_k)$.  The cost $J_d$ is defined by the running cost $\ell_d(q_k,\rho)$ and the terminal cost $m_d(q_{k_f},\rho)$.  We set them to
 \[
 \ell_d(q_k,\rho) = \epsilon_k^T\epsilon_k \textrm{ and } m_d(q_{k_f},\rho) = \epsilon_{k_f}^T\epsilon_{k_f}
 \]
-We seed the steepest descent algorithm with an initial guess of $\rho = [10, 10]^T$.  At each iteration of the descent, an Armijo line search updates the parameters by choosing a distance to step in the direction of the negative gradient.  We used Armijo parameters $\alpha = \beta = 0.4$ \cite{armijo}.  After $XXXXXXXX$ iterations, the algorithm terminated with gradient norm $DJ_d(a) = XXXXXX$.  The parameters were identified as $[XXXXXX,XXXXXX]^T$.  The convergence is shown in XXXXX.%Fig.~\ref{fig-conv}.
+We seed the steepest descent algorithm with an initial guess of $\rho = [10, 10]^T$.  At each iteration of the descent, an Armijo line search updates the parameters by choosing a distance to step in the direction of the negative gradient.  We used Armijo parameters $\alpha = \beta = 0.4$ \cite{armijo}.  After $XXXXXXXX$ iterations, the algorithm terminated with gradient norm $DJ_d(\rho) = XXXXXX$.  The parameters were identified as $[XXXXXX,XXXXXX]^T$.  The convergence is shown in XXXXX.%Fig.~\ref{fig-conv}.
 
 \section{Discussion}
 Through the proposed parameter identification procedure, we calculated the model parameters that best match physical phenomena within the constraint of the chosen model.  This process is important since an improved model can make for better object manipulation.  However, it is unclear, especially in the presented experiment, what this matching tells us about the object's physical properties.  Certainly, measuring at a single contact point provides little insight into the interior stress and strain of the rubber loop.
