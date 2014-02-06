@@ -94,7 +94,7 @@ Early Career Faculty fellowship NNX12AQ47GS02. We are grateful for this support.
 \maketitle
 
 \begin{abstract}
-We present a method for system identification of flexible objects. We model the object's structure and flexibility by a chain of rigid bodies connected by torsional springs. Unlike previous work, the proposed optimal control approach using variational integrators allows identification of closed loops, including the flexibility of the robot arm itself. This allows using the resulting models for planning in configuration space of the robot. In order to solve the resulting problem efficiently, we develop a novel method for fast discrete-time adjoint-based gradient calculation. The feasibility of the approach is demonstrated using full physics simulation using Trep and using data recorded using a 7-DOF series elastic robot arm.
+We present a method for system identification of flexible objects. We model the object's structure and flexibility by a chain of rigid bodies connected by torsional springs. Unlike previous work, the proposed optimal control approach using variational integrators allows identification of closed loops, including the robot arm itself. This allows using the resulting models for planning in configuration space of the robot. In order to solve the resulting problem efficiently, we develop a novel method for fast discrete-time adjoint-based gradient calculation. The feasibility of the approach is demonstrated using full physics simulation in trep and using data recorded from a 7-DOF series elastic robot arm.
 \end{abstract}
 
 \section{Introduction}
@@ -505,23 +505,21 @@ The matching is quantified by the cost $J_d$.  We choose $J_d$ to be quadratic o
 \[
 \ell_d(q_k,\rho) = \epsilon_k^T\epsilon_k \textrm{ and } m_d(q_{k_f},\rho) = \epsilon_{k_f}^T\epsilon_{k_f}
 \]
-We seed the steepest descent algorithm with an initial guess of $\rho = [10, 10]^T$.  At each iteration of the descent, an Armijo line search updates the parameters by choosing a distance to step in the direction of the negative gradient.  We used Armijo parameters $\alpha = \beta = 0.4$ \cite{armijo}.  After $XXXXXXXX$ iterations, the algorithm terminated with gradient norm $DJ_d(\rho) = XXXXXX$.  The parameters were identified as $[XXXXXX,XXXXXX]^T$.  The convergence is shown in XXXXX.%Fig.~\ref{fig-conv}.
+We perform the optimization using a steepest descent algorithm with the inequality constraint that the parameters $\kappa_\theta>0$ and $\kappa_\psi>0$.    At each iteration of the descent, an Armijo line search updates the parameters by choosing a distance to step in the direction of the negative gradient.  We used Armijo parameters $\alpha = \beta = 0.4$ \cite{armijo}.
+
+We seed the steepest descent algorithm with an initial guess of $\rho = [10, 10]^T$.  After $XXXXXXXX$ iterations, the algorithm terminated with gradient norm $DJ_d(\rho) = XXXXXX$.  The parameters were identified as $[XXXXXX,XXXXXX]^T$.  The convergence is shown in XXXXX.%Fig.~\ref{fig-conv}.
 
 \section{Discussion}
 Through the proposed parameter identification procedure, we calculated the model parameters that best match physical phenomena within the constraint of the chosen model.  This process is important since an improved model can make for better object manipulation.  However, it is unclear, especially in the presented experiment, what this matching tells us about the object's physical properties.  Certainly, measuring at a single contact point provides little insight into the interior stress and strain of the rubber loop.
 
 Furthermore, we assumed the loop has uniform stiffness.  Without this assumption, multiple experiments would be needed at different contact points to identify the non-uniformity.  Also, objects with more complex geometries would require additional experiments.  For instance, grasping and manipulating a single leaf of a tomato plant would provide little insight for identifying the stiffness of the full plant.  Multiple experiments as well as algorithms to determine appropriate actions is a topic of future work.
 
-As the parameter identification process is informed from actual manipulation, the proposed method could also be used online, thereby improving a model estimate with the time the robot spent with an object growing. We note that identification in this paper relies exclusively on proprioceptive data that are compared with model prediction. In the future, we are also interested to combine this data with exterioperception such as cameras, 3D data, and dynamic tactile sensing \cite{hughes2014}. 
+As the parameter identification process is informed from actual manipulation, the proposed method could also be used online, thereby improving a model estimate with the time the robot spent with an object growing. We note that identification in this paper relies exclusively on proprioceptive data that are compared with model prediction. In the future, we plan to combine this data with exterioperception such as cameras, 3D data, and dynamic tactile sensing \cite{hughes2014}. 
 
 Finally, we note that the fidelity of the approach heavily depends on the choice of the model. While this choice strongly depends on the desired manipulation task, we are also interested in automatically finding appropriate model representations for given geometries and conceptual knowledge on the object, such as ``plant'', ``tube'' or ``sheet''.  
 
 \section{Conclusion}
-
-
-
-
-
+We provided a method for optimally identifying the model parameters of a flexible object manipulated by a robotic arm and applied it to identifying stiffness characteristics of a flexible loop.  We modeled the loop as a chain of rigid links connected by torsional springs and used variational integrators to simulate it.  The simulation accounted for the chain of links being closed to form the loop. Additionally, since we modeled the loop with the same underlying mechanics as the robotic arm, the full system can be simulated together, allowing for planning in the configuration space.  The feasibility of the approach was demonstrated using the variational integrator simulating software \texttt{trep} and with data recorded from a 7-DOF series elastic robot arm.
 
 \bibliographystyle{plain}
 \bibliography{param_opts_cites}
