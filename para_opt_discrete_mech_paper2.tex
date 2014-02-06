@@ -99,7 +99,7 @@ We present a method for system identification of flexible objects. We model the 
 
 \section{Introduction}
 % 1. What do you want to do
-The goal of this works is to use a robotic arm to identify the behavior of a flexible object through touch only. This is an important step toward manipulation of flexible objects such as rubber tubes, plants or clothes.  
+The goal of this works is to use a robotic arm to identify the behavior of a flexible object through touch only. This is an important step toward manipulation of flexible objects such as rubber tubes, plants or clothes \cite{wakamatsu2006knotting,saha2007manipulation,bell2010flexible,jimenez2012survey}.  
 % 2. How is it done now and what are the limitations of current practice
 There are many methods to model and simulate flexible objects \cite{khalil_payeur, lang_etal}.  A common approach is to model the object as a lattice or collection of links of masses and springs \cite{sahari_etal, wakamatsu_etal, khalil_payeur}.  This approach has been used to simulate linear object like strings, hair, and electrical cables for which the model is a series of masses linked together with springs. %%% MISSING: LIMITATIONS OF THIS APPROACH  
 
@@ -505,7 +505,7 @@ Through the proposed parameter identification procedure, we calculated the model
 
 Furthermore, we assumed the loop has uniform stiffness.  Without this assumption, multiple experiments would be needed at different contact points to identify the non-uniformity.  Also, objects with more complex geometries would require additional experiments.  For instance, grasping and manipulating a single leaf of a tomato plant would provide little insight for identifying the stiffness of the full plant.  Multiple experiments as well as algorithms to determine appropriate actions is a topic of future work.
 
-As the parameter identification process is informed from actual manipulation, the proposed method could also be used online, thereby improving a model estimate with the time the robot spent with an object growing. We note that identification in this paper relies exclusively on proprioceptive data that are compared with model prediction. In the future, we are also interested to combine this data with exterioperception such as cameras and 3D data. 
+As the parameter identification process is informed from actual manipulation, the proposed method could also be used online, thereby improving a model estimate with the time the robot spent with an object growing. We note that identification in this paper relies exclusively on proprioceptive data that are compared with model prediction. In the future, we are also interested to combine this data with exterioperception such as cameras, 3D data, and dynamic tactile sensing \cite{hughes2014}. 
 
 Finally, we note that the fidelity of the approach heavily depends on the choice of the model. While this choice strongly depends on the desired manipulation task, we are also interested in automatically finding appropriate model representations for given geometries and conceptual knowledge on the object, such as ``plant'', ``tube'' or ``sheet''.  
 
