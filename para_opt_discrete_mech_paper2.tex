@@ -103,20 +103,29 @@ This material is .....}%
 \end{abstract}
 
 \section{Introduction}
-The goal of this works is to use a robotic arm to identify the behavior of a flexible object through touch only.  The object under consideration for this paper is a flexible loop.  We assume the robot has already rigidly grasped the object at one end and that it is clamped at the other.  The robot then bends, twists, and stretches the loop.  During the manipulation, the robot measures the arm's joint torques and joint angles.  With this information, it is possible to back out mechanical properties of the loop in order to generate an accurate model for future control and manipulation.  In this paper, the manner in which we model the loop is so that the underlying mechanics of the loop are the same as the robot arm.  Furthermore, we provide an optimal control approach for calculating model properties that best match the behavior of the physical loop.
+% 1. What do you want to do
+The goal of this works is to use a robotic arm to identify the behavior of a flexible object through touch only. This is an important step toward manipulation of flexible objects such as rubber tubes, plants or clothes.  
+% 2. How is it done now and what are the limitations of current practice
+There are many methods to model and simulate flexible objects \cite{khalil_payeur, lang_etal}.  A common approach is to model the object as a lattice or collection of links of masses and springs \cite{sahari_etal, wakamatsu_etal, khalil_payeur}.  This approach has been used to simulate linear object like strings, hair, and electrical cables for which the model is a series of masses linked together with springs. %%% MISSING: LIMITATIONS OF THIS APPROACH  
 
-There are many methods to model and simulate flexible objects \cite{khalil_payeur, lang_etal}.  A common approach is to model the object as a lattice or collection of links of masses and springs \cite{sahari_etal, wakamatsu_etal, khalil_payeur}.  This approach has been used to simulate linear object like strings, hair, and electrical cables for which the model is a series of masses linked together with springs.   Our approach is similar with the primary difference that the loop connects back onto itself.  This connection restricts the loops movement and is handled using holonomic constraints.  To the best of our knowledge, no one has used a robot to identify parameters of a flexible loop for manipulation.
+% 3. What are you doing that is new and why do you think it will be successful
+Our approach is similar with the primary difference that the loop connects back onto itself.  This connection restricts the loops movement and is handled using holonomic constraints.  To the best of our knowledge, no one has used a robot to identify parameters of a flexible loop for manipulation.
 
-We approximate the loop as a ring of $n_l$ links.  Adjacent links connect together through spherical joints with torsional springs. We assume each link is rigid and as such the vast theory of rigid body mechanics is relevant \cite{murray_li_sastry}.  Furthermore, since the robot arm is a series of joined rigid links---albeit with actuated joints---the full system, robot arm, and loop can be modeled together.  As such, planning and control can be done in the configuration space instead of the end effector or object space. 
+We are using a flexible loop as running example throughout the paper.  We assume the robot has already rigidly grasped the object at one end and that it is clamped at the other.  The robot then bends, twists, and stretches the loop.  During the manipulation, the robot measures the arm's joint torques and joint angles.  With this information, it is possible to back out mechanical properties of the loop in order to generate an accurate model for future control and manipulation.  In this paper, the manner in which we model the loop is so that the underlying mechanics of the loop are the same as the robot arm, i.e., a collection of rigid bodies connected by springs, allowing is to build up on 
+the vast theory of rigid body mechanics is relevant \cite{murray_li_sastry}. Also,  this enables planning and control to be done in the configuration space instead of the end effector or object space.  We then use an optimal control approach for calculating model properties that best match the behavior of the physical loop.
+
+
+%We approximate the loop as a ring of $n_l$ links.  Adjacent links connect together through spherical joints with torsional springs. We assume each link is rigid and as such the vast theory of rigid body mechanics is relevant \cite{murray_li_sastry}.  Furthermore, since the robot arm is a series of joined rigid links---albeit with actuated joints---the full system, robot arm, and loop can be modeled together.  As such, planning and control can be done in the configuration space instead of the end effector or object space. 
 
 \begin{figure}
 \centering
-\includegraphics[width = 220pt]{init_bloop.pdf}
-\caption{Illustration of Rethink Robotics' Baxter manipulating the approximated loop.}
+\includegraphics[width = 220pt]{bloop_experiment_image}
+\caption{Rethink Robotics' Baxter manipulating an inflated bicycle tyre.}
 \label{fig-baxter_image_1}
 \end{figure}
 
-We use Rethink Robotics' Baxter \cite{guizzo2011rethink} robot to both manipulate and measure the loop.  Each of Baxter's arms have 7 degrees of freedom.  The arms are designed for compliance since each joint has series elastic actuators that allows for force sensing and control.  An illustration of Baxter manipulating a 12 link approximation of a loop is in Figure~\ref{fig-baxter_image_1}.
+% How do you determine success?
+We use Rethink Robotics' Baxter \cite{guizzo2011rethink} robot to both manipulate and measure the loop.  Each of Baxter's arms have 7 degrees of freedom.  The arms are designed for compliance since each joint has series elastic actuators that allows for force sensing and control.  An illustration of Baxter manipulating a 12 link approximation of a loop is in Figure~\ref{fig-bloop_experiment}.
 
 A good representation of a flexible object is not enough to accurately model it.  We also need the model simulation to be consistent with the physical behavior of the loop.  We decided not to apply Euler integration or another low order integrator to the continuous dynamics, as is the case in \cite{sahari_etal}, because such integrators can introduce significant energy errors.  At worst these errors will destabilize the integration and at best compromise the model's energy dissipation \cite{johnson_murphey_scalable}.  Instead we decided to use \emph{variational integrators}.  Variational integrators can be used to describe discrete-time equations of motion of a mechanical system.  They are designed from the least action principle and have good properties that match known physical phenomenon like preserving---or nearly preserving---conservation of energy and momentum \cite{johnson_murphey_scalable, marsden_west}.
 
@@ -128,8 +137,10 @@ With a model and simulation to predict the motion of a flexible object, unknown 
 
 The parameter identification optimization problem is set up as a discrete-time Bolza problem.  For the loop example, the cost functional is a summation of the joint errors between the simulated joint angles and the experimentally-measured joint angles.  The joint error directly correlates to the difference between the simulated loop displacement and the measured loop displacement, at least at the manipulator.  Alternatively, the cost can be given by a maximum likelihood estimate for which the cost is lower for parameters that correspond to the simulation that is most consistent with the measurement (see \cite{houska_etal}).  
 
+\subsection{Contribution of this paper}
 The paper's contributions are twofold.  First, it provides a discrete-time adjoint-based gradient calculation for optimal parameter estimation.  Second, it formulates model parameter identification of flexible objects with variational integrators for greater confidence in the simulations' consistency with known physical properties.
 
+\subsection{Organization of this paper}
 This paper is organized as follows: Section \ref{sec-sys} reviews continuous and discrete mechanical systems, discussing variational integrators and providing linearization calculations.  Section \ref{sec-opt} discusses the parameter identification optimization problem as well as provides an adjoint-based gradient calculation.  Section \ref{sec-experiment} provides the details of the physical experiment using Rethink Robotics' Baxter, in addition to specifics on the loop model and simulation.  Moreover, it applies the parameter identification approach to estimate stiffness properties of the rubber loop model.
 
 \section{Mechanical Systems}
@@ -368,8 +379,8 @@ and the proof is finished.
 \label{sec-experiment}
 \begin{figure}
 \centering
-\includegraphics[width = 220pt]{bloop_experiment_image.pdf}
-\caption{Picture of Baxter manipulating a rubber loop.}
+\includegraphics[width = 220pt]{init_bloop}
+\caption{Illustration of Baxter manipulating a rubber loop approximated by 12 links connected by torsional springs.}
 \label{fig-bloop_experiment}
 \end{figure}
 
