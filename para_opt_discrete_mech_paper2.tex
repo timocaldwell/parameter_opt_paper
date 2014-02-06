@@ -86,37 +86,41 @@
 
 \author{T. M. Caldwell and  D. Coleman and N. Correll% <-this % stops a space
 \thanks{
-This material is .....}%
+This work was supported by a NASA
+Early Career Faculty fellowship NNX12AQ47GS02. We are grateful for this support.}%
 }
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-%This paper considers the problem of optimal parameter identification of flexible objects using variational integrators for simulation.  The example object is 
-
-
-
-%We provide a discrete-time adjoint-based gradient calculation 
-
- %and apply it to identifying the stiffness properties of a flexible loop.  
+We present a method for system identification of flexible objects. We model the object's structure and flexibility by a chain of rigid bodies connected by torsional springs. Unlike previous work, the proposed optimal control approach using variational integrators allows identification of closed loops, including the flexibility of the robot arm itself. This allows using the resulting models for planning in configuration space of the robot. In order to solve the resulting problem efficiently, we develop a novel method for fast discrete-time adjoint-based gradient calculation. The feasibility of the approach is demonstrated using full physics simulation using Trep and using data recorded using a 7-DOF series elastic robot arm.
 \end{abstract}
 
 \section{Introduction}
-The goal of this works is to use a robotic arm to identify the behavior of a flexible object through touch only.  The object under consideration for this paper is a flexible loop.  We assume the robot has already rigidly grasped the object at one end and that it is clamped at the other.  The robot then bends, twists, and stretches the loop.  During the manipulation, the robot measures the arm's joint torques and joint angles.  With this information, it is possible to back out mechanical properties of the loop in order to generate an accurate model for future control and manipulation.  In this paper, the manner in which we model the loop is so that the underlying mechanics of the loop are the same as the robot arm.  Furthermore, we provide an optimal control approach for calculating model properties that best match the behavior of the physical loop.
+% 1. What do you want to do
+The goal of this works is to use a robotic arm to identify the behavior of a flexible object through touch only. This is an important step toward manipulation of flexible objects such as rubber tubes, plants or clothes \cite{wakamatsu2006knotting,saha2007manipulation,bell2010flexible,jimenez2012survey}.  
+% 2. How is it done now and what are the limitations of current practice
+There are many methods to model and simulate flexible objects \cite{khalil_payeur, lang_etal}.  A common approach is to model the object as a lattice or collection of links of masses and springs \cite{sahari_etal, wakamatsu_etal, khalil_payeur}.  This approach has been used to simulate linear object like strings, hair, and electrical cables for which the model is a series of masses linked together with springs. %%% MISSING: LIMITATIONS OF THIS APPROACH  
 
-There are many methods to model and simulate flexible objects \cite{khalil_payeur, lang_etal}.  A common approach is to model the object as a lattice or collection of links of masses and springs \cite{sahari_etal, wakamatsu_etal, khalil_payeur}.  This approach has been used to simulate linear object like strings, hair, and electrical cables for which the model is a series of masses linked together with springs.   Our approach is similar with the primary difference that the loop connects back onto itself.  This connection restricts the loops movement and is handled using holonomic constraints.  To the best of our knowledge, no one has used a robot to identify parameters of a flexible loop for manipulation.
+% 3. What are you doing that is new and why do you think it will be successful
+Our approach is similar with the primary difference that the loop connects back onto itself.  This connection restricts the loops movement and is handled using holonomic constraints.  To the best of our knowledge, no one has used a robot to identify parameters of a flexible loop for manipulation.
 
-We approximate the loop as a ring of $n_l$ links.  Adjacent links connect together through spherical joints with torsional springs. We assume each link is rigid and as such the vast theory of rigid body mechanics is relevant \cite{murray_li_sastry}.  Furthermore, since the robot arm is a series of joined rigid links---albeit with actuated joints---the full system, robot arm, and loop can be modeled together.  As such, planning and control can be done in the configuration space instead of the end effector or object space. 
+We are using a flexible loop as running example throughout the paper.  We assume the robot has already rigidly grasped the object at one end and that it is clamped at the other.  The robot then bends, twists, and stretches the loop.  During the manipulation, the robot measures the arm's joint torques and joint angles.  With this information, it is possible to back out mechanical properties of the loop in order to generate an accurate model for future control and manipulation.  In this paper, the manner in which we model the loop is so that the underlying mechanics of the loop are the same as the robot arm, i.e., a collection of rigid bodies connected by springs, allowing is to build up on 
+the vast theory of rigid body mechanics is relevant \cite{murray_li_sastry}. Also,  this enables planning and control to be done in the configuration space instead of the end effector or object space.  We then use an optimal control approach for calculating model properties that best match the behavior of the physical loop.
+
+
+%We approximate the loop as a ring of $n_l$ links.  Adjacent links connect together through spherical joints with torsional springs. We assume each link is rigid and as such the vast theory of rigid body mechanics is relevant \cite{murray_li_sastry}.  Furthermore, since the robot arm is a series of joined rigid links---albeit with actuated joints---the full system, robot arm, and loop can be modeled together.  As such, planning and control can be done in the configuration space instead of the end effector or object space. 
 
 \begin{figure}
 \centering
-\includegraphics[width = 220pt]{init_bloop.pdf}
-\caption{Illustration of Rethink Robotics' Baxter manipulating the approximated loop.}
+\includegraphics[width = 220pt]{bloop_experiment_image}
+\caption{Rethink Robotics' Baxter manipulating an inflated bicycle tyre.}
 \label{fig-baxter_image_1}
 \end{figure}
 
-We use Rethink Robotics' Baxter \cite{guizzo2011rethink} robot to both manipulate and measure the loop.  Each of Baxter's arms have 7 degrees of freedom.  The arms are designed for compliance since each joint has series elastic actuators that allows for force sensing and control.  An illustration of Baxter manipulating a 12 link approximation of a loop is in Figure~\ref{fig-baxter_image_1}.
+% How do you determine success?
+We use Rethink Robotics' Baxter \cite{guizzo2011rethink} robot to both manipulate and measure the loop.  Each of Baxter's arms have 7 degrees of freedom.  The arms are designed for compliance since each joint has series elastic actuators that allows for force sensing and control.  An illustration of Baxter manipulating a 12 link approximation of a loop is in Figure~\ref{fig-bloop_experiment}.
 
 A good representation of a flexible object is not enough to accurately model it.  We also need the model simulation to be consistent with the physical behavior of the loop.  We decided not to apply Euler integration or another low order integrator to the continuous dynamics, as is the case in \cite{sahari_etal}, because such integrators can introduce significant energy errors.  At worst these errors will destabilize the integration and at best compromise the model's energy dissipation \cite{johnson_murphey_scalable}.  Instead we decided to use \emph{variational integrators}.  Variational integrators can be used to describe discrete-time equations of motion of a mechanical system.  They are designed from the least action principle and have good properties that match known physical phenomenon like preserving---or nearly preserving---conservation of energy and momentum \cite{johnson_murphey_scalable, marsden_west}.
 
@@ -128,16 +132,18 @@ With a model and simulation to predict the motion of a flexible object, unknown 
 
 The parameter identification optimization problem is set up as a discrete-time Bolza problem.  For the loop example, the cost functional is a summation of the joint errors between the simulated joint angles and the experimentally-measured joint angles.  The joint error directly correlates to the difference between the simulated loop displacement and the measured loop displacement, at least at the manipulator.  Alternatively, the cost can be given by a maximum likelihood estimate for which the cost is lower for parameters that correspond to the simulation that is most consistent with the measurement (see \cite{houska_etal}).  
 
+\subsection{Contribution of this paper}
 The paper's contributions are twofold.  First, it provides a discrete-time adjoint-based gradient calculation for optimal parameter estimation.  Second, it formulates model parameter identification of flexible objects with variational integrators for greater confidence in the simulations' consistency with known physical properties.
 
+\subsection{Organization of this paper}
 This paper is organized as follows: Section \ref{sec-sys} reviews continuous and discrete mechanical systems, discussing variational integrators and providing linearization calculations.  Section \ref{sec-opt} discusses the parameter identification optimization problem as well as provides an adjoint-based gradient calculation.  Section \ref{sec-experiment} provides the details of the physical experiment using Rethink Robotics' Baxter, in addition to specifics on the loop model and simulation.  Moreover, it applies the parameter identification approach to estimate stiffness properties of the rubber loop model.
 
 \section{Mechanical Systems}
 \label{sec-sys}
-A comparison of continuous time and discrete time mechanical systems is presented.  The mechanical system depends on $n_a$ system parameters from the parameter space $\mathcal{P}\in\setR^m$. The mechanical system has $n_q$ generalized coordinates $q\in\setR^{n_q}$.  For continuous time, $q$ varies with the continuous variable $t$\textemdash e.g. $q(t)$\textemdash for $t$ in the interval $[0,t_f]$, $t_f>0$.  Likewise, for the discrete representation, $q$ varies with the discrete variable $k$\textemdash e.g. $q_k$\textemdash for $k$ in the set $\mathcal{K}:=\{0,1,\ldots,k_f\}$, $k_f>0$.  Each discrete time $k$ pairs with a continuous time, labeled $t_k$, where $t_0 = 0$, $t_{k_f} = t_f$ and $t_k<t_{k+1}$. This section presents the continuous and discrete dynamics dependent on the parameters $\rho\in\mathcal{P}$.  The continuous dynamics are provided for comparison with the discrete system, in which the paper results are given.
+A comparison of continuous time and discrete time mechanical systems is presented to introduce the models and notation used in this paper.  The mechanical system depends on $n_a$ system parameters from the parameter space $\mathcal{P}\in\setR^m$. The mechanical system has $n_q$ generalized coordinates $q\in\setR^{n_q}$.  For continuous time, $q$ varies with the continuous variable $t$\textemdash e.g. $q(t)$\textemdash for $t$ in the interval $[0,t_f]$, $t_f>0$.  Likewise, for the discrete representation, $q$ varies with the discrete variable $k$\textemdash e.g. $q_k$\textemdash for $k$ in the set $\mathcal{K}:=\{0,1,\ldots,k_f\}$, $k_f>0$.  Each discrete time $k$ pairs with a continuous time, labeled $t_k$, where $t_0 = 0$, $t_{k_f} = t_f$ and $t_k<t_{k+1}$. This section presents the continuous and discrete dynamics dependent on the parameters $\rho\in\mathcal{P}$.  The continuous dynamics are provided for comparison with the discrete system, in which the paper results are given.
 
 \subsection{Continuous Mechanical System}
-We review continuous mechanical systems for reference with discrete mechanical systems.  A mechanical system's evolution is given by the path of least action.  The system's action is 
+We will first review continuous mechanical systems for reference with discrete mechanical systems.  A mechanical system's evolution is given by the path of least action.  The system's action is 
 \[
 S = \int_0^{t_f}L(q(\tau),\dot{q}(\tau),\rho)d\tau
 \]
@@ -147,7 +153,9 @@ As is common in mechanical systems, we wish to include external forces, $F_c(q,\
 \[
 \frac{d}{d t}\frac{\partial}{\partial \dot{q}}L(q,\dot{q},\rho) - \frac{\partial}{\partial q}L(q,\dot{q},\rho) = F_c(q,\dot{q},\rho,t).
 \]
-Holonomic constraints can be enforced as external forces using Lagrange multipliers.  The $n_h$ holonomic constraint equations are given in the form $h(q,\rho)= [h_1,\ldots,h_{n_h}]^T(q,\rho) = 0$.  With the addition of the constraint, the forced Euler-Lagrange equations are \cite{murray_li_sastry}:
+Holonomic constraints can be enforced as external forces using Lagrange multipliers.  The $n_h$ holonomic constraint equations are given in the form $h(q,\rho)= [h_1,\ldots,h_{n_h}]^T(q,\rho) = 0$. This is important, as it allows us to describe closed loops. 
+
+With the addition of the constraint, the forced Euler-Lagrange equations are \cite{murray_li_sastry}:
 \begin{equation}
 \begin{array}{c}
 \frac{d}{d t}\frac{\partial}{\partial \dot{q}}L(q,\dot{q},\rho) - \frac{\partial}{\partial q}L(q,\dot{q},\rho) = F_c(q,\dot{q},\rho,t) + \frac{\partial}{\partial q}h^T(q,\rho)\lambda\\
@@ -162,7 +170,7 @@ Equation \ref{eq-cont_EL} can be transformed into first-order state space equati
 \subsection{Discrete Mechanical System}
 The discrete mechanical system is an approximation of its continuous counterpart.  For an initial configuration $q(0)$ and velocity $\dot{q}(0)$, the continuous configuration $q([0,t_f])$ is integrated from the forced Euler-Lagrange equations, Eq.(\ref{eq-cont_EL}).  The discrete analog to the forced Euler-Lagrange equations instead calculates the sequence $q_k\approx q(t_k)$ using a variational integrator approach \cite{johnson_murphey_scalable}.  
 
-The discrete Lagrangian, labelled $L_d$, is an approximation of the action over a short time interval.  Instead of a velocity term, the discrete Lagrangian is defined by the current and next configurations, $q_k$ and $q_{k+1}$:
+The discrete Lagrangian, labeled $L_d$, is an approximation of the action over a short time interval.  Instead of a velocity term, the discrete Lagrangian is defined by the current and next configurations, $q_k$ and $q_{k+1}$:
 \begin{equation}
 L_d(q_k,q_{k+1},\rho) \approx \int_{t_k}^{t_{k+1}}L(q(\tau),\dot{q}(\tau),\rho)d\tau.
 \label{eq-Ld}
@@ -236,7 +244,7 @@ The calculations for the linearization term $A_k$ is given in \cite{johnson_murp
 \label{eq-A22}
 \end{equation}
 \end{subequations}
-where $\frac{\partial \lambda}{\partial q_k}$ can be found in \cite{johnson_murphey_linearization}.  Notice the calculations for Eqs (\ref{eq-A21}) and (\ref{eq-A22}) rely on the calculations for Eqs (\ref{eq-A11}) and (\ref{eq-A12}) respectively.  The $B_k$ term is given by chain rule:
+where $\frac{\partial \lambda}{\partial q_k}$ can be found in \cite{johnson_murphey_linearization}.  Notice the calculations for Eqs.\ (\ref{eq-A21}) and (\ref{eq-A22}) rely on the calculations for Eqs.\ (\ref{eq-A11}) and (\ref{eq-A12}) respectively.  The $B_k$ term is given by chain rule:
 \begin{subequations}
 \label{eq-B}
 \begin{equation}
@@ -366,26 +374,27 @@ and the proof is finished.
 
 \section{Experiment}
 \label{sec-experiment}
-\begin{figure}
+\begin{figure}[!htb]
 \centering
-\includegraphics[width = 220pt]{bloop_experiment_image.pdf}
-\caption{Picture of Baxter manipulating a rubber loop.}
+\includegraphics[width = 220pt]{init_bloop}
+\caption{Illustration of Baxter manipulating a rubber loop approximated by 12 links connected by torsional springs.}
 \label{fig-bloop_experiment}
 \end{figure}
 
-The goal is to identify the model parameters of a flexible loop that best match experimental measurements of a flexible loop with only touch at a single point of contact.  For measuring and manipulating, we use Rethink Robotics' Baxter robot, shown in Figure~\ref{fig-bloop_experiment}. We additionally simulate this interaction using a discrete model of the loop.  The simulated arm joint angles and torques depend on the parameters set for a simulation.  As such, we can find the parameters which correspond to simulated joint angles that best match the measured joint angles.  For this experiment, the unknown parameters describe the stiffness of the loop model.
+The goal is to identify the model parameters of a flexible loop that best match experimental measurements of a flexible loop with only touch at a single point of contact.  For measuring and manipulating, we use Rethink Robotics' Baxter robot, shown in Figure~\ref{fig-baxter_image_1}. We additionally simulate this interaction using a discrete model of the loop.  The simulated arm joint angles and torques depend on the parameters set for a simulation.  As such, we can find the parameters which correspond to simulated joint angles that best match the measured joint angles.  For this experiment, the unknown parameters describe the stiffness of the loop model.
 
-The tools for simulating Baxter manipulating a loop are given in Section \ref{sec-sys} while the optimization technique for best matching the simulation to the measured is in Section \ref{sec-opt}.  The following provides the experimental setup, the model and simulation of Baxter manipulating the loop, and the results of optimally identifying loop parameters.
+The tools for simulating Baxter manipulating a loop are given in Section \ref{sec-sys} while the optimization technique for best matching the simulation to the measured data is described in Section \ref{sec-opt}.  The following provides the experimental setup, the model and simulation of Baxter manipulating the loop, and the results of optimally identifying loop parameters.
 
 \subsection{Experimental Setup \label{sec-setup}}
-The experiment is set up as follows.  Baxter's arm is positioned similarly to that in Figure~\ref{fig-baxter_image_1}.  The top of a rubber loop is placed in Baxter's gripper and the bottom is clamped to the table.   The loop is initially positioned vertically. The loop has a radius of $0.355$ meters and a mass of $0.132$ kilograms.  The arm is run through a recorded motion that is designed to stretch, bend, and twist the tube. The arm's joint angles and torques are captured every 100Hz, which we compile into the two vectors $b_{meas}(t)$ and $T_{meas}(t)$.  The measured joint angles have a position resolution of +/- 5 mm.
+
+The experiment is set up as follows.  Baxter's arm is positioned similarly to that in Figure~\ref{fig-baxter_image_1}.  The top of an inflated rubber loop (bicycle tyre) is placed in Baxter's gripper and the bottom is clamped to the table.   The loop is initially positioned vertically. The loop has a radius of $0.355$ meters and a mass of $0.132$ kilograms.  The arm is run through a recorded motion that is designed to stretch, bend, and twist the tube. The arm's joint angles and torques are captured every 100Hz, which we compile into the two vectors $b_{meas}(t)$ and $T_{meas}(t)$.  The measured joint angles have a position resolution of +/- 5 mm.
 
 The measured joint angles $b_{meas}$ correspond to a subset of the system configuration $q$, where the remaining configurations belong to the loop.  We label this subset of $q$ that describes the arm as $b$.  The optimization goal is to choose model parameters so that $|b-b_{meas}|$ is small.
 
 \subsection{Model}
 We model Baxter and the loop with the same underlying rigid body mechanics.  We model both as a series of rigid links connected by rotational joints.  For Baxter, these joints are 7 series elastic actuators.  The dimensions,  inertia, and other information concerning Baxter's arm can be obtained at \url{https://github.com/RethinkRobotics}.  
 
-\begin{figure*}
+\begin{figure*}[!htb]
 \centering
 \def\svgwidth{.97\textwidth}%500pt}
 \input{loop_link.pdf_tex}
@@ -393,7 +402,7 @@ We model Baxter and the loop with the same underlying rigid body mechanics.  We 
 \label{fig-loop_link}
 \end{figure*}
 
-We use a discrete model of the loop.  The loop is composed of 12 rigid links wherein the connection between each rigid link is a spherical joint.  A single loop joint is shown in Figure~\ref{fig-loop_link}.  As seen in the figure, the orientation of the new link is given by the angles $\theta_i$ and $\psi_i$.  These rotations are described on a frame that is rotated about the $X-axis$ by $5\pi/6$ radians so that when each $\psi_i = \theta_i = 0$, the loop approximation is a regular dodecagon.  These angles, the $\theta_i$ and $\psi_i$, along with Baxter's joint angles, $b$, make up the system configuration $q$.  
+We use a discrete model of the loop.  The loop is composed of 12 rigid links wherein the connection between each rigid link is a spherical joint.  A single loop joint is shown in Figure~\ref{fig-loop_link}.  As seen in the figure, the orientation of the new link is given by the angles $\theta_i$ and $\psi_i$.  These rotations are described on a frame that is rotated about the $X-axis$ by $5\pi/6$ radians so that when each $\psi_i = \theta_i = 0$, the loop approximation is a regular dodecagon.  These angles, the $\theta_i$ and $\psi_i$, along with Baxter's joint angles, $b$, make up the system configuration $q$. Note that the choice of the discretization is arbitrary and only dependent on the required fidelity of the model as well as available computational time. 
 
 We represent Baxter grasping the loop using a tree structure of transformations.  This tree structure is illustrated in Figure~\ref{fig-3bloops}a).  Starting from the world frame $\mathcal{W}$, the arm is specified with successive rotation and translation transformations.  At Baxter's end effector, labeled $H$, the description branches, splitting the loop into two sides, marked with $\ell$ and $r$ for left and right.  The two branches meet at the base of the loop, where the loop is clamped.  For arbitrary Baxter and loop joint angles, $q$, there is no guarantee that the two ends of the loop meet at the clamping location in space.  When they do, we say that the system configuration satisfies the holonomic constraint $h(q) = 0$.  There are 12 total constraints---i.e. $h(q)\in\setR^{12}$.  There are 6 constraints for each side of the loop transformation description in order to constrain the orientation and position of frames $N_\ell$ and $N_r$ to the clamp location.  Figure~\ref{fig-3bloops} shows three different configurations $q$ that satisfy the constraints.
 
@@ -427,7 +436,7 @@ F_d^+(q_k,q_{k+1},\rho,t_k,t_{k+1}) = 0.
 \]
 It is a simple process to translate the continuous system to the discrete variational integrator one. Finally, in order to simulate the dynamics using the one-step mapping in Eq.(\ref{eq-fk}), we need certain partial derivatives of the Lagrangian, external forces and constraints with respect to configuration variables, which can be found in \cite{johnson_murphey_scalable}.  
 
-The external forces $F_c$ are applied at the configuration variables.  For Baxter manipulating the loop, the only external forces are those applied at the 7 configuration variables that define Baxter's arm, which we have labelled as $b$. Due to model and sensor error, it is not reasonable to expect that the simulation will provide meaningful results, let alone be stable by directly setting $F_c = T_{meas}$, the experimentally measured joint torques.  Instead, we decided to filter them using a proportional feedback loop as so:
+The external forces $F_c$ are applied at the configuration variables.  For Baxter manipulating the loop, the only external forces are those applied at the 7 configuration variables that define Baxter's arm, which we have labeled as $b$. Due to model and sensor error, it is not reasonable to expect that the simulation will provide meaningful results, let alone be stable by directly setting $F_c = T_{meas}$, the experimentally measured joint torques.  Instead, we decided to filter them using a proportional feedback loop as so:
 \[
 F_{c}(t) = T_{meas}(t) - K(t) (b(t) - b_{meas}(t)),
 \]
@@ -476,7 +485,7 @@ Repeating the derivation for $D_3D_2L_d(q_k,q_{k+1},\rho)$ we find that $D_3D_2L
 
 Furthermore, we need to calculate $D_1h(q_k,\rho)$, $D_1^2h(q_k,\rho)$ and $D_1D2h(q_k,\rho)$, the last of which is $0$ since the constraints do not depend on the parameters.  These partial derivatives of $h$ are given simply by the chain rule and depend on the first and second partial derivatives of the transformations from the world frame $W$ to frames $N_r$ and $N_\ell$ (refer to Figure~\ref{fig-3bloops} for the frames).  These partial derivatives can be found in \cite{johnson_murphey_linearization}.  
 
-\subsection{Optimal Paramater Identification}
+\subsection{Optimal Parameter Identification}
 %\begin{figure}
 %\centering
 %\includegraphics[width = 250pt]{bloop_convergence.pdf}
@@ -493,9 +502,13 @@ The matching is quantified by the cost $J_d$.  We choose $J_d$ to be quadratic o
 We seed the steepest descent algorithm with an initial guess of $\rho = [10, 10]^T$.  At each iteration of the descent, an Armijo line search updates the parameters by choosing a distance to step in the direction of the negative gradient.  We used Armijo parameters $\alpha = \beta = 0.4$ \cite{armijo}.  After $XXXXXXXX$ iterations, the algorithm terminated with gradient norm $DJ_d(a) = XXXXXX$.  The parameters were identified as $[XXXXXX,XXXXXX]^T$.  The convergence is shown in XXXXX.%Fig.~\ref{fig-conv}.
 
 \section{Discussion}
-Through the proposed parameter identification procedure, we calculated the model parameters that best match physical phenomena.  This process is important since the improved model can make for better object manipulation.  However, it is unclear, especially in the presented experiment, what this matching tells us about the object's physical properties.  Certainly, measuring at a single contact point provides little insight into the interior stress and strain of the rubber loop.
+Through the proposed parameter identification procedure, we calculated the model parameters that best match physical phenomena within the constraint of the chosen model.  This process is important since an improved model can make for better object manipulation.  However, it is unclear, especially in the presented experiment, what this matching tells us about the object's physical properties.  Certainly, measuring at a single contact point provides little insight into the interior stress and strain of the rubber loop.
 
-Furthermore, we assumed the loop has uniform stiffness.  Without this assumption, multiple experiments would be needed at different contact points to identify the non-uniformity.  Also, objects with more complex geometries would require additional experiments.  For instance, grasping and manipulating a single leaf of a tomato plant would provide little insight for identifying the stiffness of the full plant.  Multiple experiments is a topic of future work.
+Furthermore, we assumed the loop has uniform stiffness.  Without this assumption, multiple experiments would be needed at different contact points to identify the non-uniformity.  Also, objects with more complex geometries would require additional experiments.  For instance, grasping and manipulating a single leaf of a tomato plant would provide little insight for identifying the stiffness of the full plant.  Multiple experiments as well as algorithms to determine appropriate actions is a topic of future work.
+
+As the parameter identification process is informed from actual manipulation, the proposed method could also be used online, thereby improving a model estimate with the time the robot spent with an object growing. We note that identification in this paper relies exclusively on proprioceptive data that are compared with model prediction. In the future, we are also interested to combine this data with exterioperception such as cameras, 3D data, and dynamic tactile sensing \cite{hughes2014}. 
+
+Finally, we note that the fidelity of the approach heavily depends on the choice of the model. While this choice strongly depends on the desired manipulation task, we are also interested in automatically finding appropriate model representations for given geometries and conceptual knowledge on the object, such as ``plant'', ``tube'' or ``sheet''.  
 
 \section{Conclusion}
 
