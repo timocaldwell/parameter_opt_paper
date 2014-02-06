@@ -309,7 +309,7 @@ constrained to $x_{k+1} = f(x_k,\rho,t_k)$, Eq.(\ref{eq-fk}).
 \label{prob-disc}
 \end{problem}
 
-In optimal control theory, it is common practice to solve optimization problems using iterative methods.  Iterative optimization methods repeatedly reduce the cost by stepping in a descending direction until a local optimum is found.  Commonly, the step direction and step size is calculated using local derivative information \cite{armijo, kelley}, which is practice in this paper.  In the next section, we provide an adjoint-based calculation for the gradient of the cost functional with respect to the parameters.
+In optimal control theory, it is common practice to solve optimization problems using iterative methods.  Iterative optimization methods repeatedly reduce the cost by stepping in a descending direction until a local optimum is found.  Commonly, the step direction and step size is calculated using local derivative information \cite{armijo, kelley}, which is practiced in this paper.  In the next section, we provide an adjoint-based calculation for the gradient of the cost functional with respect to the parameters.
 
 \subsection{Discrete System Parameter Gradient}
 The gradient of the cost functional given in problem \ref{prob-disc} is provided in the following lemma.
@@ -401,7 +401,8 @@ The goal is to identify the model parameters of a flexible loop that best match 
 The tools for simulating Baxter manipulating a loop are given in Section \ref{sec-sys} while the optimization technique for best matching the simulation to the measured data is described in Section \ref{sec-opt}.  The following provides the experimental setup, the model and simulation of Baxter manipulating the loop, and the results of optimally identifying loop parameters.
 
 \subsection{Experimental Setup \label{sec-setup}}
-The experiment is set up as follows.  Baxter's arm is positioned similarly to that in Figure~\ref{fig-baxter_image_1}.  The top of an inflated rubber loop (bicycle tyre) is placed in Baxter's gripper and the bottom is clamped to the table.   The loop is initially positioned vertically. The loop has a radius of $0.355$ meters and a mass of $0.132$ kilograms.  The arm is run through a recorded motion that is designed to stretch, bend, and twist the tube. The arm's joint angles and torques are captured every 100Hz, which we compile into the two vectors $b_{meas}(t)$ and $T_{meas}(t)$.  
+
+The experiment is set up as follows.  Baxter's arm is positioned similarly to that in Figure~\ref{fig-baxter_image_1}.  The top of an inflated rubber loop (bicycle tyre) is placed in Baxter's gripper and the bottom is clamped to the table.   The loop is initially positioned vertically. The loop has a radius of $0.355$ meters and a mass of $0.132$ kilograms.  The arm is run through a recorded motion that is designed to stretch, bend, and twist the tube. The arm's joint angles and torques are captured every 100Hz, which we compile into the two vectors $b_{meas}(t)$ and $T_{meas}(t)$.  The measured joint angles have a position resolution of +/- 5 mm.
 
 The measured joint angles $b_{meas}$ correspond to a subset of the system configuration $q$, where the remaining configurations belong to the loop.  We label this subset of $q$ that describes the arm as $b$.  The optimization goal is to choose model parameters so that $|b-b_{meas}|$ is small.
 
@@ -489,7 +490,7 @@ D_3D_1L_d(q_k,q_{k+1},\rho) = \\\hspace{10pt}- [D_3D_1 V_{\theta,d}(q_k,q_{k+1},
 \]
 Repeating the derivation for $D_3D_2L_d(q_k,q_{k+1},\rho)$ we find that $D_3D_2L_d(q_k,q_{k+1},\rho) = D_3D_1L_d(q_k,q_{k+1},\rho)$
 
-Furthermore, we need to calculate $D_1h(q_k,\rho)$, $D_1^2h(q_k,\rho)$ and $D_1D2h(q_k,\rho)$, the last of which is $0$ since the constraints do not depend on the parameters.  These partial derivatives of $h$ are given simply by chain rule and depend on the first and second partial derivatives of the transformations from the world frame $W$ to frames $N_r$ and $N_\ell$ (refer to Figure~\ref{fig-3bloops} for the frames).  These partial derivatives can be found in \cite{johnson_murphey_linearization}.  
+Furthermore, we need to calculate $D_1h(q_k,\rho)$, $D_1^2h(q_k,\rho)$ and $D_1D2h(q_k,\rho)$, the last of which is $0$ since the constraints do not depend on the parameters.  These partial derivatives of $h$ are given simply by the chain rule and depend on the first and second partial derivatives of the transformations from the world frame $W$ to frames $N_r$ and $N_\ell$ (refer to Figure~\ref{fig-3bloops} for the frames).  These partial derivatives can be found in \cite{johnson_murphey_linearization}.  
 
 \subsection{Optimal Parameter Identification}
 %\begin{figure}
@@ -505,7 +506,7 @@ The matching is quantified by the cost $J_d$.  We choose $J_d$ to be quadratic o
 \[
 \ell_d(q_k,\rho) = \epsilon_k^T\epsilon_k \textrm{ and } m_d(q_{k_f},\rho) = \epsilon_{k_f}^T\epsilon_{k_f}
 \]
-We perform the optimization using a steepest descent algorithm with the inequality constraint that the parameters $\kappa_\theta>0$ and $\kappa_\psi>0$.    At each iteration of the descent, an Armijo line search updates the parameters by choosing a distance to step in the direction of the negative gradient.  We used Armijo parameters $\alpha = \beta = 0.4$ \cite{armijo}.
+We perform the optimization using a steepest descent algorithm with the inequality constraint that the parameters are $\kappa_\theta>0$ and $\kappa_\psi>0$.    At each iteration of the descent, an Armijo line search updates the parameters by choosing a distance to step in the direction of the negative gradient.  We used Armijo parameters $\alpha = \beta = 0.4$ \cite{armijo}.
 
 We seed the steepest descent algorithm with an initial guess of $\rho = [10, 10]^T$.  After $XXXXXXXX$ iterations, the algorithm terminated with gradient norm $DJ_d(\rho) = XXXXXX$.  The parameters were identified as $[XXXXXX,XXXXXX]^T$.  The convergence is shown in XXXXX.%Fig.~\ref{fig-conv}.
 
