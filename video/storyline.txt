@@ -1,0 +1,12 @@
+We are interested in understanding the properties of flexible objects just from deforming them.
+
+This is important if we want to plan for manipulating such objects such as bicycle tyre tubes, as in this example, or plants.
+
+
+We achieve this by modeling the object as a collection of masses connected by springs. 
+
+Knowing how the robot has moved and what forces it feels, we can now calculate what the spring constants are that best match this observation. To do this, we simulate our spring-mass system using variational integrators and use gradient descent to minimize the error between simulated and measured displacement and forces. 
+
+The plot to the left shows how the optimization algorithm converges while the plot to the right shows how the simulated trajectory eventually converges toward the measured one, showing a final error due to model fidelity.
+
+ 
